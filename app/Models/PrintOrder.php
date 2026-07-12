@@ -1,0 +1,4 @@
+<?php
+namespace App\Models;
+use App\Enums\PrintOrderStatus; use Illuminate\Database\Eloquent\Model; use Illuminate\Database\Eloquent\Relations\BelongsTo; use Illuminate\Database\Eloquent\Relations\HasMany;
+class PrintOrder extends Model { protected $guarded=[]; protected $hidden=['pickup_code_hash','pdf_path']; protected function casts(): array { return ['status'=>PrintOrderStatus::class,'requested_pickup_at'=>'datetime','expires_at'=>'datetime','printing_started_at'=>'datetime','printing_completed_at'=>'datetime','ready_at'=>'datetime','claimed_at'=>'datetime','discarded_at'=>'datetime']; } public function locker(): BelongsTo { return $this->belongsTo(Locker::class); } public function histories(): HasMany { return $this->hasMany(PrintOrderStatusHistory::class); } public function deviceCommands(): HasMany { return $this->hasMany(DeviceCommand::class); } }
