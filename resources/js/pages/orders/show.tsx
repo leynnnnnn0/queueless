@@ -1,6 +1,8 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { CheckCircle2 } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import PublicShell from '@/components/public-shell';
+import { useOrderStatus } from '@/hooks/use-order-status';
 type Order = {
     reference: string;
     status: string;
@@ -29,19 +31,32 @@ export default function ShowOrder({
     pickupCode?: string;
 }) {
     const flash = usePage().props.flash as { success?: string } | undefined;
+    const [liveOrder, setLiveOrder] = useState(order);
+    const handleUpdate = useCallback(
+        (update: { status: string; message: string; at: string }) => {
+            setLiveOrder((current) => ({
+                ...current,
+                status: update.status,
+                history: [...current.history, update],
+            }));
+        },
+        [],
+    );
+
+    useOrderStatus(order.reference, handleUpdate);
 
     return (
         <PublicShell>
-            <Head title={`Track ${order.reference}`} />
+            <Head title={`Track ${liveOrder.reference}`} />
             <div className="flex flex-wrap items-start justify-between gap-5">
                 <div>
-                    <p className="text-cyan-300">Order {order.reference}</p>
+                    <p className="text-cyan-300">Order {liveOrder.reference}</p>
                     <h1 className="mt-2 text-4xl font-semibold">
-                        {label(order.status)}
+                        {label(liveOrder.status)}
                     </h1>
                 </div>
                 <span className="rounded-full bg-cyan-400/10 px-4 py-2 text-sm text-cyan-200">
-                    Locker {order.locker}
+                    Locker {liveOrder.locker}
                 </span>
             </div>
             {pickupCode && (
@@ -61,9 +76,9 @@ export default function ShowOrder({
             )}
             <div className="mt-10 grid gap-6 md:grid-cols-3">
                 {[
-                    ['File', order.filename],
-                    ['Pickup', date(order.pickup_at)],
-                    ['Expires', date(order.expires_at)],
+                    ['File', liveOrder.filename],
+                    ['Pickup', date(liveOrder.pickup_at)],
+                    ['Expires', date(liveOrder.expires_at)],
                 ].map(([k, v]) => (
                     <div
                         key={k}
@@ -77,7 +92,7 @@ export default function ShowOrder({
             <section className="mt-12">
                 <h2 className="text-2xl font-semibold">Status timeline</h2>
                 <div className="mt-6 space-y-5">
-                    {order.history.map((h) => (
+                    {liveOrder.history.map((h) => (
                         <div key={h.at} className="flex gap-4">
                             <CheckCircle2 className="mt-1 size-5 shrink-0 text-cyan-300" />
                             <div>

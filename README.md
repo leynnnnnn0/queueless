@@ -66,3 +66,31 @@ Turn power off before rewiring. Test one servo at a time, do not force powered h
 With simulation enabled, submit a sample PDF, watch the queue worker advance the tracking timeline, then enter the displayed pickup code. Set a short expiry grace to test automatic discard via the scheduler. With hardware enabled, repeat while watching Serial Monitor: catcher moves after printing, pickup opens for the configured duration, and trash moves for an expired order.
 
 Run automated checks with `php artisan test`, `npm run types:check`, `npm run lint:check`, and `npm run build`.
+
+## Realtime order updates (Reverb)
+
+The tracking page receives each order-status transition over Laravel Reverb. Start Reverb alongside the queue worker and scheduler:
+
+```bash
+php artisan reverb:start
+```
+
+For local HTTP development, use `REVERB_HOST=127.0.0.1`, `REVERB_PORT=8080`, and `REVERB_SCHEME=http`. For the Raspberry Pi production site, Reverb must be exposed through the same HTTPS domain with a WebSocket reverse proxy. Use the public domain for the client/broadcast variables and keep Reverb itself listening privately on port 8080:
+
+```env
+BROADCAST_CONNECTION=reverb
+REVERB_APP_ID=queueless
+REVERB_APP_KEY=replace-with-a-random-public-key
+REVERB_APP_SECRET=replace-with-a-long-random-secret
+REVERB_HOST=queueless.capstoneprototype.online
+REVERB_PORT=443
+REVERB_SCHEME=https
+REVERB_SERVER_HOST=127.0.0.1
+REVERB_SERVER_PORT=8080
+VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
+VITE_REVERB_HOST="${REVERB_HOST}"
+VITE_REVERB_PORT="${REVERB_PORT}"
+VITE_REVERB_SCHEME="${REVERB_SCHEME}"
+```
+
+Configure BerryPanel/Nginx to forward WebSocket traffic for `/app` to `http://127.0.0.1:8080`, including `Upgrade` and `Connection` headers. After changing production environment values, run `php artisan optimize:clear`, `npm run build`, `php artisan config:cache`, and restart the Reverb, queue-worker, and PHP services.
