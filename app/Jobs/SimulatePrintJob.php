@@ -40,8 +40,8 @@ class SimulatePrintJob implements ShouldQueue
             $device->setLockerOccupied($order);
             $statuses->transition($order, PrintOrderStatus::ReadyForPickup, 'Your document is ready for pickup.', ['ready_at' => now()]);
         } catch (\Throwable $exception) {
-            $statuses->transition($order, PrintOrderStatus::Failed, 'The order could not be completed.', ['failure_reason' => $exception->getMessage()]);
             $lockers->release($order);
+            $statuses->transition($order, PrintOrderStatus::Failed, 'The order could not be completed.', ['failure_reason' => $exception->getMessage()]);
 
             throw $exception;
         }
