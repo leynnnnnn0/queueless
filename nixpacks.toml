@@ -1,0 +1,6 @@
+[phases.setup]
+nixPkgs = [
+    "php84",
+    "nodejs_22",
+    "npm-10_x"
+]
